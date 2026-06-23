@@ -83,7 +83,10 @@ newgrp docker
 docker --version
 docker compose version
 ```
-
+- OR
+```
+wget -q -O docker.sh https://raw.githubusercontent.com/molla202/molla202/refs/heads/main/docker.sh && chmod +x docker.sh && sudo /bin/bash docker.sh
+```
 ### 2.4 Node.js v18+ Kurulumu
 
 ```bash
@@ -130,6 +133,12 @@ Wizard sırasıyla şunları yapar:
 6. Validator akıllı kontratını deploy eder
 7. Moniker, website gibi kimlik bilgilerini girersin
 
+### 3.2b Var olan cüzdanı import etme 
+```bash
+genlayer account import --password pass-write --private-key 0x --name name
+```
+NOT: daha sonra wizard kodunuzu girince cüzdanınız görünecek onu seçip validator kontratını deploy edıyoruz.
+
 ### 3.3 Bu Bilgileri Not Al!
 
 ```
@@ -139,7 +148,7 @@ Validator Wallet: 0x...  ← Akıllı kontrat adresi (config'de lazım)
 ```
 
 ### 3.4 Keystore Dosyasını Sunucuya Kopyala
-
+NOT: eğer harici bir eyrde yapmadıysanız bu adıma gerek yok.
 ```bash
 # Kendi makinenden çalıştır — IP ve kullanıcı adını değiştir
 scp ./operator-keystore.json kullanici@SUNUCU_IP:$HOME/operator-keystore.json
@@ -174,10 +183,10 @@ export VERSION=v0.5.12   # Yukarıdaki listeden en yeni versiyonu kullan
 wget https://storage.googleapis.com/gh-af/genlayer-node/bin/amd64/${VERSION}/genlayer-node-linux-amd64-${VERSION}.tar.gz
 
 # Sabit isimli klasöre çıkart — güncelleme sırasında bu isim değişmeyecek
-mkdir -p $HOME/genlayer-node
-tar -xzvf genlayer-node-linux-amd64-${VERSION}.tar.gz -C $HOME/genlayer-node
-
-cd $HOME/genlayer-node
+mkdir -p $HOME/.genlayer
+tar -xzvf genlayer-node-linux-amd64-${VERSION}.tar.gz
+mv $HOME/genlayer-node-linux-amd64/* $HOME/.genlayer/
+cd $HOME/.genlayer
 ```
 
 ### 4.3 GenVM Kurulumunu Çalıştır
@@ -191,11 +200,10 @@ python3 ./third_party/genvm/bin/setup.py
 ### 4.4 Sistem Symlink'i Oluştur
 
 ```bash
-sudo ln -sf $HOME/genlayer-node/bin/genlayernode /usr/local/bin/genlayernode
+sudo ln -sf $HOME/.genlayer/bin/genlayernode /usr/local/bin/genlayernode
 
 # Doğrula
 which genlayernode
-genlayernode --version
 ```
 
 ---
@@ -205,9 +213,9 @@ genlayernode --version
 ### 5.1 Gerekli Klasörler
 
 ```bash
-mkdir -p $HOME/genlayer-node/configs/node
-mkdir -p $HOME/genlayer-node/data
-mkdir -p $HOME/genlayer-node/logs
+mkdir -p $HOME/.genlayer/configs/node
+mkdir -p $HOME/.genlayer/data
+mkdir -p $HOME/.genlayer/logs
 ```
 
 ### 5.2 Değerleri Önce Tanımla
@@ -223,18 +231,18 @@ echo "Operator  : $OPERATOR_ADDRESS"
 ```
 
 > **Asimov RPC:** Caldera tarafından sağlanır.  
-> HTTP: `https://genlayer-testnet.rpc.caldera.xyz/http`  
-> WS: `wss://genlayer-testnet.rpc.caldera.xyz/ws`  
+> HTTP: `https://zksync-os-testnet-genlayer.zksync.dev/http`  
+> WS: `wss://zksync-os-testnet-genlayer.zksync.dev/ws`  
 > Birden fazla validator aynı RPC'yi paylaşabilir veya kendi ZKSync full node'unu kurabilirsin.
 
 ### 5.3 config.yaml Oluştur
 
 ```bash
-cat > $HOME/genlayer-node/configs/node/config.yaml << EOF
+cat > $HOME/.genlayer/configs/node/config.yaml << EOF
 # rollup configuration
 rollup:
-  genlayerchainrpcurl: "https://genlayer-testnet.rpc.caldera.xyz/http"
-  genlayerchainwebsocketurl: "wss://genlayer-testnet.rpc.caldera.xyz/ws"
+  genlayerchainrpcurl: "https://zksync-os-testnet-genlayer.zksync.dev/http"
+  genlayerchainwebsocketurl: "wss://zksync-os-testnet-genlayer.zksync.dev/ws"
   provider: "caldera"
 
 # Testnet Asimov Phase 5 — consensus configuration
@@ -313,21 +321,19 @@ EOF
 Kontrol et:
 
 ```bash
-cat $HOME/genlayer-node/configs/node/config.yaml
+cat $HOME/.genlayer/configs/node/config.yaml
 ```
 
 ---
 
 ## 6. Operator Key'i İçe Aktar
-
+NOT: eğer daha once var olan cüzdanı import ettiyseniz yada yeni cüzdan olusturduysanız wizard işleminde export ederkene verilen bilgilere dikkat edin. çünkü şuan aşağıda lazım :D
 ```bash
-cd $HOME/genlayer-node
-
-genlayernode account import \
-  --password "BURAYA_NODE_ŞİFRENİ_YAZ" \
-  --passphrase "BURAYA_WIZARD_EXPORT_ŞİFRESİNİ_YAZ" \
-  --path "$HOME/operator-keystore.json" \
-  -c $HOME/genlayer-node/configs/node/config.yaml \
+./bin/genlayernode account import \
+  --password "BURAYA_NODE_ŞIFRENI_YAZ" \
+  --passphrase "BURAYA_WIZARD_EXPORT_ŞIFRESINI_YAZ" \
+  --path "/home/kullanici/operator-keystore.json" \
+  -c $(pwd)/configs/node/config.yaml \
   --setup
 ```
 
@@ -349,7 +355,7 @@ genlayernode account export \
   --address "0xOPERATOR_ADRESİN" \
   --passphrase "YEDEK_ŞİFREN" \
   --path "$HOME/operator-backup.key" \
-  -c $HOME/genlayer-node/configs/node/config.yaml
+  -c $HOME/.genlayer/configs/node/config.yaml
 ```
 
 > 🔒 Bu dosyayı güvenli bir yerde sakla!
@@ -366,18 +372,18 @@ Bu nedenle key, systemd servisine `Environment=` direktifi ile verilir.
 Servis kurmadan önce WebDriver'ı doğrula:
 
 ```bash
-cd $HOME/genlayer-node
+cd $HOME/.genlayer
 docker compose up -d
 
 # Container çalışıyor mu?
 docker ps
-# "genlayer-node-webdriver" görünmeli
+# ".genlayer-webdriver" görünmeli
 ```
 
 ### 7.2 Konfigürasyonu Doğrula
 
 ```bash
-cd $HOME/genlayer-node
+cd $HOME/.genlayer
 genlayernode doctor
 ```
 
@@ -389,7 +395,7 @@ Tüm kontroller geçmeli. Hata varsa servise geçmeden önce düzelt.
 > ilgili `Environment=` satırını ekle (COMPUT3KEY, IOINTELLIGENCE_API_KEY vb.)
 
 ```bash
-sudo tee /etc/systemd/system/genlayer-node.service > /dev/null << EOF
+sudo tee /etc/systemd/system/.genlayer.service > /dev/null << EOF
 [Unit]
 Description=GenLayer Validator Node — Testnet Asimov
 After=network-online.target docker.service
@@ -399,7 +405,7 @@ Requires=docker.service
 [Service]
 Type=simple
 User=$USER
-WorkingDirectory=$HOME/genlayer-node
+WorkingDirectory=$HOME/.genlayer
 
 # Node şifresi
 Environment="GENLAYERNODE_PASSWORD=BURAYA_NODE_ŞİFRENİ_YAZ"
@@ -413,7 +419,7 @@ Environment="HEURISTKEY=BURAYA_HEURIST_API_KEY_YAZ"
 
 ExecStartPre=/usr/bin/docker compose up -d
 ExecStart=/usr/local/bin/genlayernode run \
-  -c $HOME/genlayer-node/configs/node/config.yaml \
+  -c $HOME/.genlayer/configs/node/config.yaml \
   --password \${GENLAYERNODE_PASSWORD}
 
 Restart=on-failure
@@ -421,7 +427,7 @@ RestartSec=10
 LimitNOFILE=65535
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=genlayer-node
+SyslogIdentifier=.genlayer
 
 [Install]
 WantedBy=multi-user.target
@@ -432,21 +438,21 @@ EOF
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable genlayer-node
-sudo systemctl start genlayer-node
+sudo systemctl enable .genlayer
+sudo systemctl start .genlayer
 
 # Durumu kontrol et
-sudo systemctl status genlayer-node
+sudo systemctl status .genlayer
 ```
 
 ### 7.5 Logları Takip Et
 
 ```bash
 # Canlı log
-sudo journalctl -u genlayer-node -f
+sudo journalctl -u .genlayer -f
 
 # Node sync oldu mu?
-sudo journalctl -u genlayer-node | grep "Node is synced"
+sudo journalctl -u .genlayer | grep "Node is synced"
 # "Node is synced!!! blockNumber=XXXXX" görmelisin
 ```
 
@@ -457,10 +463,10 @@ sudo journalctl -u genlayer-node | grep "Node is synced"
 ### Servis Yönetimi
 
 ```bash
-sudo systemctl stop genlayer-node
-sudo systemctl restart genlayer-node
-sudo systemctl status genlayer-node
-sudo journalctl -u genlayer-node -n 100 --no-pager
+sudo systemctl stop .genlayer
+sudo systemctl restart .genlayer
+sudo systemctl status .genlayer
+sudo journalctl -u .genlayer -n 100 --no-pager
 ```
 
 ### Node Durumu
@@ -474,7 +480,7 @@ curl http://localhost:9153/balance
 ### Hesap Komutları
 
 ```bash
-genlayernode account list -c $HOME/genlayer-node/configs/node/config.yaml
+genlayernode account list -c $HOME/.genlayer/configs/node/config.yaml
 ```
 
 ### Validator Yönetimi
@@ -509,36 +515,36 @@ genlayer staking set-identity --validator 0x... --moniker "YeniIsim"
 export NEW_VERSION=v0.5.13
 
 # Yeni versiyonu indir
-wget https://storage.googleapis.com/gh-af/genlayer-node/bin/amd64/${NEW_VERSION}/genlayer-node-linux-amd64-${NEW_VERSION}.tar.gz
+wget https://storage.googleapis.com/gh-af/.genlayer/bin/amd64/${NEW_VERSION}/.genlayer-linux-amd64-${NEW_VERSION}.tar.gz
 
 # Geçici klasöre çıkart
-mkdir -p $HOME/genlayer-node-new
-tar -xzvf genlayer-node-linux-amd64-${NEW_VERSION}.tar.gz -C $HOME/genlayer-node-new
+mkdir -p $HOME/.genlayer-new
+tar -xzvf .genlayer-linux-amd64-${NEW_VERSION}.tar.gz -C $HOME/.genlayer-new
 
 # Yeni GenVM kurulumu
-python3 $HOME/genlayer-node-new/third_party/genvm/bin/setup.py
+python3 $HOME/.genlayer-new/third_party/genvm/bin/setup.py
 
 # Servisi durdur
-sudo systemctl stop genlayer-node
-docker compose -f $HOME/genlayer-node/docker-compose.yaml down
+sudo systemctl stop .genlayer
+docker compose -f $HOME/.genlayer/docker-compose.yaml down
 
 # Binary ve GenVM'i güncelle (configs/data/logs dokunulmaz)
-rm -rf $HOME/genlayer-node/bin $HOME/genlayer-node/third_party
-cp -r $HOME/genlayer-node-new/bin $HOME/genlayer-node/
-cp -r $HOME/genlayer-node-new/third_party $HOME/genlayer-node/
-cp $HOME/genlayer-node-new/docker-compose.yaml $HOME/genlayer-node/
+rm -rf $HOME/.genlayer/bin $HOME/.genlayer/third_party
+cp -r $HOME/.genlayer-new/bin $HOME/.genlayer/
+cp -r $HOME/.genlayer-new/third_party $HOME/.genlayer/
+cp $HOME/.genlayer-new/docker-compose.yaml $HOME/.genlayer/
 
 # Symlink güncelle
-sudo ln -sf $HOME/genlayer-node/bin/genlayernode /usr/local/bin/genlayernode
+sudo ln -sf $HOME/.genlayer/bin/genlayernode /usr/local/bin/genlayernode
 genlayernode --version
 
 # Servisi başlat
-sudo systemctl start genlayer-node
-sudo journalctl -u genlayer-node -f
+sudo systemctl start .genlayer
+sudo journalctl -u .genlayer -f
 
 # Temizlik
-rm -rf $HOME/genlayer-node-new
-rm genlayer-node-linux-amd64-*.tar.gz
+rm -rf $HOME/.genlayer-new
+rm .genlayer-linux-amd64-*.tar.gz
 ```
 
 ---
@@ -556,17 +562,17 @@ uname -m   # x86_64 olmalı
 
 Servis dosyasında LLM API key tanımlı değil veya boş bırakılmış.
 ```bash
-sudo systemctl edit genlayer-node
+sudo systemctl edit .genlayer
 # Environment="HEURISTKEY=..." satırını güncelle
-sudo systemctl restart genlayer-node
+sudo systemctl restart .genlayer
 ```
 
 ### ❌ Node validator modunda çalışmıyor
 
 `configs/node/config.yaml` içinde `validatorWalletAddress` veya `operatorAddress` boş.
 ```bash
-nano $HOME/genlayer-node/configs/node/config.yaml
-sudo systemctl restart genlayer-node
+nano $HOME/.genlayer/configs/node/config.yaml
+sudo systemctl restart .genlayer
 ```
 
 ### ❌ Docker permission denied
@@ -579,10 +585,10 @@ newgrp docker
 ### ❌ WebDriver başlamıyor
 
 ```bash
-cd $HOME/genlayer-node
+cd $HOME/.genlayer
 docker compose down
 docker compose up -d
-docker logs genlayer-node-webdriver
+docker logs .genlayer-webdriver
 ```
 
 ### ❌ Quarantine durumu
