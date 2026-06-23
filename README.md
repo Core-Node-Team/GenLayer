@@ -390,7 +390,7 @@ genlayernode doctor
 Tüm kontroller geçmeli. Hata varsa servise geçmeden önce düzelt.
 
 ### 7.3 systemd Servis Dosyasını Oluştur
-
+> [Heurist](https://www.heurist.ai/) — free [API credits](https://dev-api-form.heurist.ai/) with referral code "genlayer".
 > Heurist kullanıyorsan `HEURISTKEY`'i doldur. Başka sağlayıcı kullanıyorsan
 > ilgili `Environment=` satırını ekle (COMPUT3KEY, IOINTELLIGENCE_API_KEY vb.)
 
