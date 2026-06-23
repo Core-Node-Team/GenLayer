@@ -420,8 +420,7 @@ Environment="HEURISTKEY=BURAYA_HEURIST_API_KEY_YAZ"
 #Environment="CHUTES_API_KEY=BURAYA_CHUTES_API_KEY_YAZ"
 #Environment="OPENAIKEY=BURAYA_OPENAI_API_KEY_YAZ"
 
-ExecStartPre=/usr/bin/docker compose up -d
-ExecStart=/usr/local/bin/genlayernode run \
+ExecStart=genlayernode run \
   -c $HOME/.genlayer/configs/node/config.yaml \
   --password \${GENLAYERNODE_PASSWORD}
 
