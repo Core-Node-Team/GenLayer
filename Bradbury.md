@@ -1,25 +1,10 @@
-# 🟣 GenLayer Validator Node — Testnet Bradbury (Phase 1) Kurulum Rehberi
+# GenLayer Validator Node — Testnet Bradbury (Phase 1)
 
 <img width="1937" height="750" alt="genlayer" src="https://github.com/user-attachments/assets/3ceea3c3-303d-40fd-98ae-7c0456f5c6fe" />
 
-> Adım adım Türkçe manuel kurulum rehberi.  
-> Ağ: **Testnet Bradbury Phase 1**  
-> Kaynak: [docs.genlayer.com/validators/setup-guide](https://docs.genlayer.com/validators/setup-guide)
-
----
-
-> ### 🔵 Asimov'dan Farkı Nedir?
->
-> | | Testnet Asimov | Testnet Bradbury |
-> |---|---|---|
-> | **Amaç** | Altyapı, validator onboarding | LLM inference + consensus testi |
-> | **LLM** | Ortak/subsidized, pasif | Her validator kendi modelini seçer, aktif |
-> | **Consensus Adresi** | `0xe66B434...` / genesis `17326` | `0x8aCE036...` / genesis `501711` |
-> | **Model Seçimi** | Önemsiz | Kritik — farklı modeller test edilmeli |
-> | **Greyboxing** | Yok | Var — prompt filtreleme ve yönlendirme |
->
-> Bradbury'de LLM provider seçimi artık validatorın kendi sorumluluğundadır.
-> Her validator farklı model deneyebilir ve sonuçları karşılaştırabilir.
+> 🇹🇷 Adım adım Türkçe manuel kurulum rehberi.  
+> 🌐 Ağ: **Testnet Bradbury Phase 1**  
+> 📖 Kaynak: [docs.genlayer.com/validators/setup-guide](https://docs.genlayer.com/validators/setup-guide)
 
 ---
 
@@ -42,12 +27,12 @@
 
 | Kaynak | Gereksinim |
 |--------|-----------|
-| **RAM** | 16 GB |
-| **CPU** | 8 çekirdek — **AMD64 (x86_64) zorunlu!** ARM çalışmaz. |
-| **Disk** | 128 GB SSD/NVMe |
-| **Ağ** | 100 Mbps |
-| **İşletim Sistemi** | 64-bit Linux (Ubuntu 20.04+ önerilir) |
-| **Yazılım** | Docker, Python 3, Node.js v18+, npm |
+| 🖥️ **RAM** | 16 GB |
+| ⚙️ **CPU** | 8 çekirdek — **AMD64 (x86_64) zorunlu!** ARM çalışmaz. |
+| 💾 **Disk** | 128 GB SSD/NVMe |
+| 🌐 **Ağ** | 100 Mbps |
+| 🐧 **İşletim Sistemi** | 64-bit Linux (Ubuntu 20.04+ önerilir) |
+| 🔧 **Yazılım** | Docker, Python 3, Node.js v18+, npm |
 
 > ⚠️ **ÖNEMLİ:** Mutlaka AMD64/x86_64 mimarili sunucu kullan. `uname -m` komutu `x86_64` döndürmelidir.
 
@@ -57,19 +42,19 @@
 
 ## 2. Sunucu Hazırlığı
 
-### 2.1 Sistem Güncellemesi
+### 2.1 🔄 Sistem Güncellemesi
 
 ```bash
 sudo apt update && sudo apt upgrade -y
 ```
 
-### 2.2 Temel Araçları Kur
+### 2.2 🛠️ Temel Araçları Kur
 
 ```bash
 sudo apt install -y curl wget git build-essential python3 python3-pip python3-venv ca-certificates gnupg lsb-release
 ```
 
-### 2.3 Docker Kurulumu
+### 2.3 🐳 Docker Kurulumu
 
 ```bash
 # Eski Docker sürümlerini kaldır
@@ -90,7 +75,7 @@ echo \
 sudo apt update
 sudo apt install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
-# Kullanıcını docker grubuna ekle
+# Kullanıcını docker grubuna ekle (sudo'suz docker kullanımı)
 sudo usermod -aG docker $USER
 newgrp docker
 
@@ -99,7 +84,12 @@ docker --version
 docker compose version
 ```
 
-### 2.4 Node.js v18+ Kurulumu
+> 💡 **Alternatif — tek komutla Docker kurulumu:**
+> ```bash
+> wget -q -O docker.sh https://raw.githubusercontent.com/molla202/molla202/refs/heads/main/docker.sh && chmod +x docker.sh && sudo /bin/bash docker.sh
+> ```
+
+### 2.4 🟩 Node.js v18+ Kurulumu
 
 ```bash
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
@@ -110,7 +100,7 @@ node --version
 npm --version
 ```
 
-### 2.5 Mimari Doğrulama
+### 2.5 ✅ Mimari Doğrulama
 
 ```bash
 uname -m
@@ -123,56 +113,87 @@ uname -m
 
 > ⚠️ Bu adım **kendi bilgisayarında** (local) yapılmalıdır. Owner adresi soğuk cüzdanda tutulmalıdır.
 
-### 3.1 GenLayer CLI'yi Kur
+> 💡 **Bu bölümün amacı nedir?**  
+> Validator olabilmek için bir **validator akıllı kontratı** deploy etmen gerekiyor.  
+> Bu kontrat `genlayer staking wizard` ile oluşturuluyor.  
+> Wizard aynı zamanda node'un blok imzalamak için kullanacağı **operator adresini** de üretiyor.  
+> Operator adresi olmadan node validator modunda çalışamaz.
+
+---
+
+### 3.1 📦 GenLayer CLI'yi Kur
 
 ```bash
 npm install -g genlayer
 genlayer --version
 ```
 
-### 3.2 Staking Wizard'ı Çalıştır
+---
+
+### 3.2 🔑 Mevcut Cüzdanını Import Et (opsiyonel)
+
+Eğer zaten bir owner cüzdanın varsa wizard'ı çalıştırmadan **önce** bunu CLI'ya tanıt.  
+Wizard açıldığında mevcut hesaplarını listeler — import ettiğin cüzdanı seçerek devam edebilirsin.
+
+Yeni cüzdan oluşturacaksan bu adımı atlayabilirsin, wizard sana yeni hesap oluşturma seçeneği sunar.
+
+```bash
+genlayer account import \
+  --password "KAYIT_ŞIFRESI" \
+  --private-key "0xOWNER_PRIVATE_KEY" \
+  --name "owner"
+```
+
+---
+
+### 3.3 🧙 Staking Wizard'ı Çalıştır
 
 ```bash
 genlayer staking wizard
 ```
 
 Wizard sırasıyla şunları yapar:
-1. Owner hesabı oluşturur veya mevcut cüzdanı bağlar
-2. Ağ olarak `testnet-bradbury` seçersin
-3. En az 42.000 GEN token bakiyeni doğrular
-4. Operator keystore dosyasını oluşturur (bir export şifresi belirlersin)
-5. Stake miktarını girersin (min: 42.000)
-6. Validator akıllı kontratını deploy eder
-7. Moniker, website gibi kimlik bilgilerini girersin
 
-### 3.3 Bu Bilgileri Not Al!
+| Adım | Açıklama |
+|------|----------|
+| 1️⃣ Hesap seçimi | Import ettiğin cüzdanı seç **veya** yeni owner hesabı oluştur |
+| 2️⃣ Ağ seçimi | `testnet-bradbury` seç |
+| 3️⃣ Bakiye kontrolü | En az 42.000 GEN token olduğunu doğrular |
+| 4️⃣ Operator oluşturma | Node'un imzalama adresi olan operator hesabını oluşturur |
+| 5️⃣ Stake miktarı | Kaç GEN stake edeceğini girersin (min: 42.000) |
+| 6️⃣ Kontrat deploy | Validator akıllı kontratını zincire yazar |
+| 7️⃣ Kimlik ayarı | Moniker, website gibi bilgileri girersin |
+
+> ✅ Wizard tamamlandığında sende hem bir **validator wallet adresi** (akıllı kontrat)  
+> hem de bir **operator adresi** (imzalama hesabı) olacak. İkisi de node config\'inde zorunlu.
+
+---
+
+### 3.4 📝 Bu Bilgileri Not Al!
 
 ```
-Owner Adresi    : 0x...  ← Stake çekme yetkisi — SOĞUK CÜZDANDA TUT
-Operator Adresi : 0x...  ← Node'un imzalama adresi (config'de lazım)
-Validator Wallet: 0x...  ← Akıllı kontrat adresi (config'de lazım)
+Owner Adresi        : 0x...  ← Stake çekme yetkisi — SOĞUK CÜZDANDA TUT
+Operator Adresi     : 0x...  ← Node'un imzalama adresi (config'de lazım)
+Operator Private Key: 0x...  ← Node'a import için lazım — GÜVENLİ SAKLA
+Validator Wallet    : 0x...  ← Akıllı kontrat adresi (config'de lazım)
 ```
 
-### 3.4 Keystore Dosyasını Sunucuya Kopyala
+---
 
-```bash
-# Kendi makinenden çalıştır — IP ve kullanıcı adını değiştir
-scp ./operator-keystore.json kullanici@SUNUCU_IP:$HOME/operator-keystore.json
-```
-
-### 3.5 Validator Durumunu Kontrol Et
+### 3.5 🔍 Validator Durumunu Kontrol Et
 
 ```bash
 genlayer staking validator-info --validator 0xVALIDATOR_WALLET_ADRESİN
 ```
 
+
 ---
 
 ## 4. Node Yazılımını İndir ve Kur
 
-> Bu adımdan itibaren sunucunda çalışıyorsun.
+> 🖥️ Bu adımdan itibaren **sunucunda** çalışıyorsun.
 
-### 4.1 Mevcut Versiyonları Listele
+### 4.1 🔍 Mevcut Versiyonları Listele
 
 ```bash
 curl -s "https://storage.googleapis.com/storage/v1/b/gh-af/o?prefix=genlayer-node/bin/amd64" | \
@@ -181,32 +202,37 @@ curl -s "https://storage.googleapis.com/storage/v1/b/gh-af/o?prefix=genlayer-nod
   sort -ru | grep -v "rc" | head -n 5
 ```
 
-### 4.2 İndir ve Sabit Klasöre Çıkart
+### 4.2 ⬇️ İndir ve Sabit Klasöre Çıkart
+
+Kurulum boyunca `$HOME/.genlayer` sabit klasörünü kullanacağız.
+Güncelleme sırasında bu isim değişmez — sadece `bin` ve `third_party` içeriği güncellenir.
 
 ```bash
 export VERSION=v0.5.12   # Yukarıdaki listeden en yeni versiyonu kullan
 
 wget https://storage.googleapis.com/gh-af/genlayer-node/bin/amd64/${VERSION}/genlayer-node-linux-amd64-${VERSION}.tar.gz
 
-# Sabit isimli klasöre çıkart — güncelleme sırasında bu isim değişmeyecek
-mkdir -p $HOME/genlayer-node
-tar -xzvf genlayer-node-linux-amd64-${VERSION}.tar.gz -C $HOME/genlayer-node
+mkdir -p $HOME/.genlayer
+tar -xzvf genlayer-node-linux-amd64-${VERSION}.tar.gz
+mv $HOME/genlayer-node-linux-amd64/* $HOME/.genlayer/
 
-cd $HOME/genlayer-node
+cd $HOME/.genlayer
 ```
 
-### 4.3 GenVM Kurulumunu Çalıştır
+### 4.3 ⚙️ GenVM Kurulumunu Çalıştır
 
 ```bash
-python3 ./third_party/genvm/bin/setup.py
+python3 $HOME/.genlayer/third_party/genvm/bin/setup.py
 ```
 
-> Birkaç dakika sürebilir, sabırla bekle.
+> ⏳ Birkaç dakika sürebilir, sabırla bekle.
 
-### 4.4 Sistem Symlink'i Oluştur
+### 4.4 🔗 Sistem Symlink'i Oluştur
+
+`genlayernode` komutunu her yerden çalıştırabilmek için sistem genelinde erişilebilir hale getiriyoruz.
 
 ```bash
-sudo ln -sf $HOME/genlayer-node/bin/genlayernode /usr/local/bin/genlayernode
+sudo ln -sf $HOME/.genlayer/bin/genlayernode /usr/local/bin/genlayernode
 
 # Doğrula
 which genlayernode
@@ -217,15 +243,15 @@ genlayernode --version
 
 ## 5. Konfigürasyon Dosyasını Oluştur
 
-### 5.1 Gerekli Klasörler
+### 5.1 📁 Gerekli Klasörler
 
 ```bash
-mkdir -p $HOME/genlayer-node/configs/node
-mkdir -p $HOME/genlayer-node/data
-mkdir -p $HOME/genlayer-node/logs
+mkdir -p $HOME/.genlayer/configs/node
+mkdir -p $HOME/.genlayer/data
+mkdir -p $HOME/.genlayer/logs
 ```
 
-### 5.2 Değerleri Önce Tanımla
+### 5.2 ✏️ Değerleri Önce Tanımla
 
 ```bash
 # --- Kendi bilgilerinle doldur ---
@@ -237,13 +263,14 @@ echo "Validator : $VALIDATOR_WALLET"
 echo "Operator  : $OPERATOR_ADDRESS"
 ```
 
-> **Bradbury RPC:** Resmi Caldera endpoint'i veya kendi ZKSync node'unu kullan.  
-> GenLayer Discord `#validators` kanalında güncel Bradbury RPC URL'ini sorabilirsin.
+> 🌐 **Bradbury RPC:**  
+> HTTP: `BURAYA_BRADBURY_HTTP_RPC_URL_YAZ`  
+> WS: `BURAYA_BRADBURY_WEBSOCKET_URL_YAZ`
 
-### 5.3 config.yaml Oluştur
+### 5.3 📄 config.yaml Oluştur
 
 ```bash
-cat > $HOME/genlayer-node/configs/node/config.yaml << EOF
+cat > $HOME/.genlayer/configs/node/config.yaml << EOF
 # rollup configuration
 rollup:
   genlayerchainrpcurl: "BURAYA_BRADBURY_HTTP_RPC_URL_YAZ"
@@ -326,70 +353,61 @@ EOF
 Kontrol et:
 
 ```bash
-cat $HOME/genlayer-node/configs/node/config.yaml
+cat $HOME/.genlayer/configs/node/config.yaml
 ```
 
 ---
 
 ## 6. Operator Key'i İçe Aktar
 
-```bash
-cd $HOME/genlayer-node
+> 💡 Wizard sırasında oluşturulan operator hesabının private key'ini node'a import ediyoruz.
 
+```bash
 genlayernode account import \
   --password "BURAYA_NODE_ŞİFRENİ_YAZ" \
-  --passphrase "BURAYA_WIZARD_EXPORT_ŞİFRESİNİ_YAZ" \
-  --path "$HOME/operator-keystore.json" \
-  -c $HOME/genlayer-node/configs/node/config.yaml \
-  --setup
+  --private-key "0xOPERATOR_PRIVATE_KEY" \
+  --name "operator"
 ```
 
 Başarılı çıktı:
 
 ```
 Account imported:
+  Name: operator
   Address: 0x...
-  Account setup as a validator
 ```
 
-> Görünen adresin wizard'dan aldığın **Operator Adresi** ile eşleştiğini doğrula.
+> ✅ Görünen adresin wizard'dan aldığın **Operator Adresi** ile eşleştiğini doğrula.
 
-### Key Yedeği Al
+### Hesapları Listele
+
+```bash
+genlayernode account list -c $HOME/.genlayer/configs/node/config.yaml
+```
+
+### 🔒 Key Yedeği Al
 
 ```bash
 genlayernode account export \
-  --password "NODE_ŞİFREN" \
-  --address "0xOPERATOR_ADRESİN" \
-  --passphrase "YEDEK_ŞİFREN" \
-  --path "$HOME/operator-backup.key" \
-  -c $HOME/genlayer-node/configs/node/config.yaml
+  --account "operator" \
+  --password "YEDEK_KEYSTORE_ŞİFREN" \
+  --source-password "NODE_ŞİFREN" \
+  --output "$HOME/operator-backup.json"
 ```
 
-> 🔒 Bu dosyayı güvenli bir yerde sakla!
+> 🔐 Bu dosyayı güvenli bir yerde sakla! Kaybedersen yeni operator kurman gerekir.
 
 ---
 
 ## 7. Node'u Servis Olarak Çalıştır
 
-LLM API key'ini **node binary'si** doğrudan kullanır (GenVM modülü üzerinden).
-Key, systemd servisine `Environment=` direktifi ile verilir.
+LLM API key'ini node binary'si GenVM modülü üzerinden kullanır.
+Key, systemd servisine `Environment=` direktifi ile verilir — ayrı bir `.env` dosyasına gerek yok.
 
-> ### 💡 Bradbury'de LLM Seçimi
-> Bradbury'de her validator kendi modelini bağımsız seçer. Önerilen sağlayıcılar:
->
-> | Sağlayıcı | Ücretsiz Kredi | Link |
-> |-----------|---------------|------|
-> | **Heurist** | Evet — kod: `genlayer` | [dev-api-form.heurist.ai](https://dev-api-form.heurist.ai) |
-> | **Comput3** | Evet | [genlayer.comput3.ai](https://genlayer.comput3.ai) |
-> | **io.net** | Evet — form doldur | [form.typeform.com](https://form.typeform.com/to/pDmCCViV) |
-> | **Chutes** | Evet | [chutes.ai](https://chutes.ai) |
->
-> Farklı modellerin Intelligent Contract'larda nasıl davrandığını karşılaştırmak Bradbury'nin temel amacıdır.
-
-### 7.1 WebDriver'ı Test Et
+### 7.1 🐳 WebDriver'ı Test Et
 
 ```bash
-cd $HOME/genlayer-node
+cd $HOME/.genlayer
 docker compose up -d
 
 # Container çalışıyor mu?
@@ -397,16 +415,19 @@ docker ps
 # "genlayer-node-webdriver" görünmeli
 ```
 
-### 7.2 Konfigürasyonu Doğrula
+### 7.2 🩺 Konfigürasyonu Doğrula
 
 ```bash
-cd $HOME/genlayer-node
+cd $HOME/.genlayer
 genlayernode doctor
 ```
 
-Tüm kontroller geçmeli. Hata varsa servise geçmeden önce düzelt.
+> ⚠️ Tüm kontroller geçmeli. Hata görüyorsan servise geçmeden önce mutlaka düzelt.
 
-### 7.3 systemd Servis Dosyasını Oluştur
+### 7.3 📝 systemd Servis Dosyasını Oluştur
+
+> 💡 [Heurist](https://www.heurist.ai/) — ücretsiz API kredisi için [dev-api-form.heurist.ai](https://dev-api-form.heurist.ai) (referral kod: `genlayer`)  
+> Başka sağlayıcı kullanıyorsan ilgili `Environment=` satırının başındaki `#` işaretini kaldır ve key'ini gir.
 
 ```bash
 sudo tee /etc/systemd/system/genlayer-node.service > /dev/null << EOF
@@ -419,7 +440,7 @@ Requires=docker.service
 [Service]
 Type=simple
 User=$USER
-WorkingDirectory=$HOME/genlayer-node
+WorkingDirectory=$HOME/.genlayer
 
 # Node şifresi
 Environment="GENLAYERNODE_PASSWORD=BURAYA_NODE_ŞİFRENİ_YAZ"
@@ -431,9 +452,8 @@ Environment="HEURISTKEY=BURAYA_HEURIST_API_KEY_YAZ"
 #Environment="CHUTES_API_KEY=BURAYA_CHUTES_API_KEY_YAZ"
 #Environment="OPENAIKEY=BURAYA_OPENAI_API_KEY_YAZ"
 
-ExecStartPre=/usr/bin/docker compose up -d
 ExecStart=/usr/local/bin/genlayernode run \
-  -c $HOME/genlayer-node/configs/node/config.yaml \
+  -c $HOME/.genlayer/configs/node/config.yaml \
   --password \${GENLAYERNODE_PASSWORD}
 
 Restart=on-failure
@@ -448,7 +468,7 @@ WantedBy=multi-user.target
 EOF
 ```
 
-### 7.4 Servisi Başlat
+### 7.4 🚀 Servisi Başlat
 
 ```bash
 sudo systemctl daemon-reload
@@ -459,13 +479,13 @@ sudo systemctl start genlayer-node
 sudo systemctl status genlayer-node
 ```
 
-### 7.5 Logları Takip Et
+### 7.5 📊 Logları Takip Et
 
 ```bash
 # Canlı log
 sudo journalctl -u genlayer-node -f
 
-# Node sync oldu mu?
+# Sync durumu
 sudo journalctl -u genlayer-node | grep "Node is synced"
 # "Node is synced!!! blockNumber=XXXXX" görmelisin
 ```
@@ -474,7 +494,7 @@ sudo journalctl -u genlayer-node | grep "Node is synced"
 
 ## 8. Faydalı Komutlar
 
-### Servis Yönetimi
+### ⚙️ Servis Yönetimi
 
 ```bash
 sudo systemctl stop genlayer-node
@@ -483,7 +503,7 @@ sudo systemctl status genlayer-node
 sudo journalctl -u genlayer-node -n 100 --no-pager
 ```
 
-### Node Durumu
+### 📡 Node Durumu
 
 ```bash
 curl http://localhost:9153/health
@@ -491,13 +511,21 @@ curl http://localhost:9153/metrics
 curl http://localhost:9153/balance
 ```
 
-### Hesap Komutları
+### 👤 Hesap Komutları
 
 ```bash
-genlayernode account list -c $HOME/genlayer-node/configs/node/config.yaml
+# Kayıtlı hesapları listele
+genlayernode account list -c $HOME/.genlayer/configs/node/config.yaml
+
+# Key yedeği al
+genlayernode account export \
+  --account "operator" \
+  --password "YEDEK_KEYSTORE_ŞİFREN" \
+  --source-password "NODE_ŞİFREN" \
+  --output "$HOME/operator-backup.json"
 ```
 
-### Validator Yönetimi
+### 🥩 Validator Yönetimi
 
 ```bash
 # Validator bilgileri
@@ -523,41 +551,42 @@ genlayer staking set-identity --validator 0x... --moniker "YeniIsim"
 
 ## 9. Güncelleme Rehberi
 
-`configs`, `data` ve `logs` klasörleri korunur. Sadece `bin` ve `third_party` güncellenir.
+> ♻️ `configs`, `data` ve `logs` klasörleri korunur. Sadece `bin` ve `third_party` güncellenir.
 
 ```bash
 export NEW_VERSION=v0.5.13
 
-# Yeni versiyonu indir
+# 1. Yeni versiyonu indir ve çıkart (kendi klasörüyle gelir: genlayer-node-linux-amd64/)
 wget https://storage.googleapis.com/gh-af/genlayer-node/bin/amd64/${NEW_VERSION}/genlayer-node-linux-amd64-${NEW_VERSION}.tar.gz
+tar -xzvf genlayer-node-linux-amd64-${NEW_VERSION}.tar.gz
 
-# Geçici klasöre çıkart
-mkdir -p $HOME/genlayer-node-new
-tar -xzvf genlayer-node-linux-amd64-${NEW_VERSION}.tar.gz -C $HOME/genlayer-node-new
+# 2. Yeni GenVM kurulumu (çıkan klasör içinden çalıştır)
+python3 $HOME/genlayer-node-linux-amd64/third_party/genvm/bin/setup.py
 
-# Yeni GenVM kurulumu
-python3 $HOME/genlayer-node-new/third_party/genvm/bin/setup.py
-
-# Servisi durdur
+# 3. Servisi durdur
 sudo systemctl stop genlayer-node
-docker compose -f $HOME/genlayer-node/docker-compose.yaml down
 
-# Binary ve GenVM'i güncelle (configs/data/logs dokunulmaz)
-rm -rf $HOME/genlayer-node/bin $HOME/genlayer-node/third_party
-cp -r $HOME/genlayer-node-new/bin $HOME/genlayer-node/
-cp -r $HOME/genlayer-node-new/third_party $HOME/genlayer-node/
-cp $HOME/genlayer-node-new/docker-compose.yaml $HOME/genlayer-node/
+# 4. Binary ve GenVM'i güncelle — configs/data/logs dokunulmaz
+rm -rf $HOME/.genlayer/bin $HOME/.genlayer/third_party
+mv $HOME/genlayer-node-linux-amd64/bin $HOME/.genlayer/
+mv $HOME/genlayer-node-linux-amd64/third_party $HOME/.genlayer/
+mv $HOME/genlayer-node-linux-amd64/docker-compose.yaml $HOME/.genlayer/
 
-# Symlink güncelle
-sudo ln -sf $HOME/genlayer-node/bin/genlayernode /usr/local/bin/genlayernode
+# 5. Symlink güncelle ve versiyonu doğrula
+sudo ln -sf $HOME/.genlayer/bin/genlayernode /usr/local/bin/genlayernode
 genlayernode --version
 
-# Servisi başlat
+# 6. WebDriver'ı yeniden başlat
+cd $HOME/.genlayer
+docker compose down
+docker compose up -d
+
+# 7. Servisi başlat ve logları izle
 sudo systemctl start genlayer-node
 sudo journalctl -u genlayer-node -f
 
-# Temizlik
-rm -rf $HOME/genlayer-node-new
+# 8. Temizlik
+rm -rf $HOME/genlayer-node-linux-amd64
 rm genlayer-node-linux-amd64-*.tar.gz
 ```
 
@@ -574,7 +603,7 @@ uname -m   # x86_64 olmalı
 
 ### ❌ NO_PROVIDER_FOR_PROMPT
 
-Servis dosyasında LLM API key tanımlı değil veya boş bırakılmış.
+Servis dosyasında LLM API key boş bırakılmış.
 ```bash
 sudo systemctl edit genlayer-node
 # Environment="HEURISTKEY=..." satırını güncelle
@@ -583,21 +612,10 @@ sudo systemctl restart genlayer-node
 
 ### ❌ Node validator modunda çalışmıyor
 
-`configs/node/config.yaml` içinde `validatorWalletAddress` veya `operatorAddress` boş.
+`validatorWalletAddress` veya `operatorAddress` config'de boş.
 ```bash
-nano $HOME/genlayer-node/configs/node/config.yaml
+nano $HOME/.genlayer/configs/node/config.yaml
 sudo systemctl restart genlayer-node
-```
-
-### ❌ Yanlış consensus adresi
-
-Asimov'dan Bradbury'ye geçiş yapıyorsan config'deki `consensusaddress` ve `genesis` değerlerini değiştirmeyi unutma:
-
-```yaml
-# Bradbury Phase 1 için bu değerler olmalı
-consensus:
-  consensusaddress: "0x8aCE036C8C3C5D603dB546b031302FCf149648E8"
-  genesis: 501711
 ```
 
 ### ❌ Docker permission denied
@@ -610,7 +628,7 @@ newgrp docker
 ### ❌ WebDriver başlamıyor
 
 ```bash
-cd $HOME/genlayer-node
+cd $HOME/.genlayer
 docker compose down
 docker compose up -d
 docker logs genlayer-node-webdriver
@@ -618,18 +636,20 @@ docker logs genlayer-node-webdriver
 
 ### ❌ Quarantine durumu
 
-Yeniden başlatma veya güncelleme sonrası geçici olarak normal. Epoch'lar tamamlandıkça otomatik temizlenir.
+Yeniden başlatma veya güncelleme sonrası geçici olarak normaldir.
+Epoch'lar tamamlandıkça otomatik temizlenir.
 
 ---
 
 ## 📚 Kaynaklar
 
-- [Resmi Kurulum Rehberi](https://docs.genlayer.com/validators/setup-guide)
-- [GenVM Konfigürasyonu](https://docs.genlayer.com/validators/genvm-configuration)
-- [Explorer — Bradbury](https://explorer-bradbury.genlayer.com/)
-- [Bradbury Duyurusu](https://www.genlayer.com/news/announcing-testnet-bradbury)
-- [Discord](https://discord.gg/8Jm4v89VAu)
-- [Telegram](https://t.me/genlayer)
+| 🔗 | Link |
+|----|------|
+| 📖 Resmi Kurulum Rehberi | [docs.genlayer.com/validators/setup-guide](https://docs.genlayer.com/validators/setup-guide) |
+| ⚙️ GenVM Konfigürasyonu | [docs.genlayer.com/validators/genvm-configuration](https://docs.genlayer.com/validators/genvm-configuration) |
+| 🔭 Explorer — Bradbury | [explorer-bradbury.genlayer.com](https://explorer-bradbury.genlayer.com/) |
+| 💬 Discord | [discord.gg/8Jm4v89VAu](https://discord.gg/8Jm4v89VAu) |
+| 📢 Telegram | [t.me/genlayer](https://t.me/genlayer) |
 
 ---
 
